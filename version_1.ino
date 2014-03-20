@@ -9,6 +9,7 @@
  #include <Servo.h>
  #include <EEPROM.h>
  #include <uSTimer2.h>
+ #include <CharliePlexM.h>
  
 Servo servo_LeftMotor;
 Servo servo_RightMotor;
@@ -38,23 +39,20 @@ const int ci_Front_Ultrasonic_Data = 7;   //output plug
 const int ci_Right_Ultrasonic_Ping = A4;   //input plug
 const int ci_Right_Ultrasonic_Data = 6;   //output plug
 
-
-const int ci_Left_Line_Tracker = A0;
-const int ci_Right_Line_Tracker = A1;
-
-
+const int startbutton = 12;
 
 unsigned long ul_Front_Echo_Time;
 unsigned long ul_Right_Echo_Time;
 
-unsigned int ui_Left_Line_Tracker_Data;
-unsigned int ui_Right_Line_Tracker_Data;
-
-unsigned int prev_time;
+unsigned long prev_time;
 
 
 void setup() {
   Serial.begin(9600);
+  
+  CharliePlexM::setBtn(13,13,13,13,13);     // Required to have Encoders working :(
+  CharliePlexM::setEncoders(ci_Front_Encoder,ci_Back_Encoder);
+  
   
   // set up ultrasonic
   pinMode(ci_Front_Ultrasonic_Ping, OUTPUT);
@@ -74,21 +72,96 @@ void setup() {
   pinMode(ci_Back_Motor, OUTPUT);
   servo_BackMotor.attach(ci_Back_Motor);
 
-                    
-  pinMode(ci_Left_Line_Tracker, INPUT);
-  pinMode(ci_Right_Line_Tracker, INPUT);                  
-
-
+                            
   pinMode(ci_Left_Encoder, INPUT);
   pinMode(ci_Right_Encoder, INPUT);
   pinMode(ci_Back_Encoder, INPUT);
   pinMode(ci_Front_Encoder, INPUT);
+ 
+ // Declare start push button 4 
+  pinMode(startbutton, INPUT);
+  digitalWrite(startbutton, HIGH);
+  
+  // Delay to allow time for the robot to start motion
+  while (digitalRead(startbutton) == HIGH) {}
+  prev_time = millis();
+  while (millis() - prev_time < 3000) {};
+    
+}
+
+boolean reached = false;
+int currentmicros = 1500;
+void loop()
+{
+
+  
+ //if (!reached && CharliePlexM::ul_RightEncoder_Count < 7000) {
+    currentmicros = 1800;
+  servo_RightMotor.writeMicroseconds(currentmicros);
+  servo_LeftMotor.writeMicroseconds(currentmicros);
+ // }
+  
+  // Back encoder not working :(
+  
+  Serial.println(" ");
+      Serial.print("Encoder 1 =  ");
+      Serial.println(CharliePlexM::ul_LeftEncoder_Count);
+      Serial.print("Encoder 2 =  ");
+      Serial.println(CharliePlexM::ul_RightEncoder_Count);
+   
+   
+   Ping();
+  while (ul_Front_Echo_Time/58 < 7) {
+    Ping();
+       servo_FrontMotor.writeMicroseconds(1500);
+        servo_BackMotor.writeMicroseconds(1500);
+        servo_RightMotor.writeMicroseconds(1500);
+        servo_LeftMotor.writeMicroseconds(1500);
+  }
+   
+   
+  if (ul_Right_Echo_Time/58 > 15) {
+        servo_FrontMotor.writeMicroseconds(1200);
+        servo_BackMotor.writeMicroseconds(1200);
+        Ping();
+    }
+
+    if (ul_Right_Echo_Time/58 < 5) {
+        servo_FrontMotor.writeMicroseconds(1800);
+        servo_BackMotor.writeMicroseconds(1800);
+        Ping();
+    }
+    else {
+        servo_FrontMotor.writeMicroseconds(1500);
+        servo_BackMotor.writeMicroseconds(1500);
+  }
+  
+  
+  /*
+   if (CharliePlexM::ul_RightEncoder_Count > 500) {
+     if (!reached) {
+       currentmicros = 1500;
+       servo_FrontMotor.writeMicroseconds(currentmicros);
+       servo_BackMotor.writeMicroseconds(currentmicros);
+       prev_time=millis();
+       while((millis()-prev_time)<2000) {};
+       reached = true;
+     }
+       currentmicros = 1500;
+       servo_FrontMotor.writeMicroseconds(currentmicros);
+       servo_BackMotor.writeMicroseconds(currentmicros);
+   }
+  
+  
+if (CharliePlexM::ul_RightEncoder_Count > 1000) {
+         servo_FrontMotor.writeMicroseconds(1500);
+       servo_BackMotor.writeMicroseconds(1500);
+  while (true) {}
 }
 
 
-void loop()
-{
   //Ping();
+/*
    prev_time=millis();
    while((millis()-prev_time)<2000)
    {
@@ -126,14 +199,10 @@ void loop()
    }
 
    
-   
-  ui_Left_Line_Tracker_Data = analogRead(ci_Left_Line_Tracker);
-  ui_Right_Line_Tracker_Data = analogRead(ci_Right_Line_Tracker);
-  
-  Serial.print("Trackers: Left = ");
-  Serial.print(ui_Left_Line_Tracker_Data,DEC);
-  Serial.print(", Right = ");
-  Serial.println(ui_Right_Line_Tracker_Data,DEC);
+  */
+ 
+ 
+ 
 }
 
   
@@ -176,6 +245,9 @@ void Ping()
   digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
   ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 10000);
 
+  
+  
+
   // Print Sensor Readings
   //#ifdef DEBUG_ULTRASONIC
   Serial.print("FRONT");
@@ -195,7 +267,6 @@ void Ping()
   Serial.println(ul_Right_Echo_Time/58);
 //#endif
 }  
-
 
 
 
