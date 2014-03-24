@@ -3,8 +3,7 @@
  MSE 2202 Project
  Language: Arduino
  
- 
- */
+*/
  
  #include <Servo.h>
  #include <EEPROM.h>
@@ -49,6 +48,12 @@ unsigned long ul_Right_Echo_Time;
 
 unsigned int ui_Left_Line_Tracker_Data;
 unsigned int ui_Right_Line_Tracker_Data;
+
+
+unsigned int ui_Left_Motor_Speed=1500;
+unsigned int ui_Right_Motor_Speed=1500;
+unsigned int ui_Front_Motor_Speed=1500;
+unsigned int ui_Back_Motor_Speed=1500;
 
 unsigned int prev_time;
 
@@ -134,6 +139,12 @@ void loop()
   Serial.print(ui_Left_Line_Tracker_Data,DEC);
   Serial.print(", Right = ");
   Serial.println(ui_Right_Line_Tracker_Data,DEC);
+  
+  
+   servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+   servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+   servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
+   servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
 }
 
   
@@ -196,6 +207,16 @@ void Ping()
 //#endif
 }  
 
+void walltracking()
+{
+  if(on track)
+  {
+    ui_Left_Motor_Speed
+  }
+  
+  
+  
+}
 
 
 

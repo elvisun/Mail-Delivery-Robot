@@ -1,0 +1,82 @@
+#include <iostream>
+using namespace std;
+
+//Pseudocode for Chassis Control:
+
+// The rooms are numbered 0, 1, 2, and 3
+// The start room (SEB 3099) is always 1, because it is in between 0 & 2 in the map :)
+
+int previousroom = 1; // Always start at room 1
+int destinationroom = 1; // Always start at room 1
+int visited[5] = {0,0,1,0,0};
+
+bool mailexists = false; // Stores if there is outgoing mail
+loop() {
+	check outbox mail, from upper micro
+	mailexists = status of mail (true or false)
+	if (outgoing mail exists) {
+		destinationroom = Get Destination Room from upper micro
+	}
+
+
+	if (destinationroom != previousroom && outgoing mail exists) {
+		moverobot();	
+		drop mail
+	}
+	else {
+		for (int i = 0; i < 3; i++) {
+			if (visited[i] == 0) {
+				destinationroom = i;
+				moverobot();
+				i = 4; // Exits the loop
+			}
+		}
+	}
+}
+
+
+// This function orders the robot to go from previousroom to destinationroom
+void moverobot() {
+	
+		if (previousroom == 2) {
+
+			if (destinationroom == 1) {
+				robot2to1();
+				visited[2] = true;
+			}
+			else if (destinationroom == 3) {
+				robot2to1();
+				robot1to3();
+				visited[3] = true;
+			}
+		}
+		else if (previousroom == 1) {
+			if (destinationroom == 2) {
+				robot1to2();
+				visited[2] = true;
+			}
+			else if (destinationroom == 3) {
+				robot1to3();
+				visited[3] = true;
+			}
+		}	
+		else if (previousroom == 3) {
+
+			if (destinationroom == 1) {
+				robot3to1();
+				visited[1] = true;
+			}
+			else if (destinationroom == 2) {
+				robot3to1();
+				robot1to2();
+				visited[2] = true;
+			}
+		}	
+		
+		
+	
+	previousroom = destinationroom;
+
+}
+
+
