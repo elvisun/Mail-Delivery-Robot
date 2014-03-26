@@ -22,6 +22,7 @@ boolean bt_Motors_Enabled = true;
 
 //port pin constants
 
+
 const int ci_Left_Motor = 11;
 const int ci_Right_Motor = 9;
 const int ci_Front_Motor = 8;
@@ -34,17 +35,20 @@ const int ci_Back_Encoder = 4;
 
 const int ci_Front_Ultrasonic_Ping = A5;   //input plug
 const int ci_Front_Ultrasonic_Data = 7;   //output plug
-const int ci_Right_Ultrasonic_Ping = A4;   //input plug
-const int ci_Right_Ultrasonic_Data = 6;   //output plug
+const int ci_Left_Ultrasonic_Ping = A4;   //input plug
+const int ci_Left_Ultrasonic_Data = 6;   //output plug  //good
 
-
-const int ci_Left_Line_Tracker = A0;
-const int ci_Right_Line_Tracker = A1;
+const int ci_Right_Ultrasonic_Ping = A1;   //input plug
+const int ci_Right_Ultrasonic_Data = A0;   //output plug
+const int ci_Back_Ultrasonic_Ping = A3;   //input plug
+const int ci_Back_Ultrasonic_Data = A2;   //output plug
 
 
 
 unsigned long ul_Front_Echo_Time;
 unsigned long ul_Right_Echo_Time;
+unsigned long ul_Left_Echo_Time;
+unsigned long ul_Back_Echo_Time;
 
 unsigned int ui_Left_Line_Tracker_Data;
 unsigned int ui_Right_Line_Tracker_Data;
@@ -66,6 +70,11 @@ void setup() {
   pinMode(ci_Front_Ultrasonic_Data, INPUT);
   pinMode(ci_Right_Ultrasonic_Ping, OUTPUT);
   pinMode(ci_Right_Ultrasonic_Data, INPUT);
+  
+  pinMode(ci_Back_Ultrasonic_Ping, OUTPUT);
+  pinMode(ci_Back_Ultrasonic_Data, INPUT);
+  pinMode(ci_Left_Ultrasonic_Ping, OUTPUT);
+  pinMode(ci_Left_Ultrasonic_Data, INPUT);
 
 
 
@@ -80,8 +89,8 @@ void setup() {
   servo_BackMotor.attach(ci_Back_Motor);
 
                     
-  pinMode(ci_Left_Line_Tracker, INPUT);
-  pinMode(ci_Right_Line_Tracker, INPUT);                  
+  //pinMode(ci_Left_Line_Tracker, INPUT);
+  //pinMode(ci_Right_Line_Tracker, INPUT);                  
 
 
   pinMode(ci_Left_Encoder, INPUT);
@@ -93,7 +102,8 @@ void setup() {
 
 void loop()
 {
-  //Ping();
+   Ping();
+   /*
    prev_time=millis();
    while((millis()-prev_time)<2000)
    {
@@ -146,6 +156,7 @@ void loop()
    servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
    servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
 }
+*/
 
   
   // RUNNING THE MOTOR
@@ -167,7 +178,7 @@ void loop()
    prevtime=millis();
    }
   */
-
+}
 
 void Ping()
 {
@@ -176,7 +187,6 @@ void Ping()
   digitalWrite(ci_Front_Ultrasonic_Ping, HIGH);
   delayMicroseconds(10);  //The 10 microsecond pause where the pulse in "high"
   digitalWrite(ci_Front_Ultrasonic_Ping, LOW);
-  
   //use command pulseIn to listen to Ultrasonic_Data pin to record the
   //time that it takes from when the Pin goes HIGH until it goes LOW 
   ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 10000);
@@ -186,6 +196,17 @@ void Ping()
   delayMicroseconds(10);
   digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
   ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 10000);
+  
+  digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Left_Ultrasonic_Ping, LOW);
+  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 10000);
+  
+  digitalWrite(ci_Back_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Back_Ultrasonic_Ping, LOW);
+  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 10000);
+  
 
   // Print Sensor Readings
   //#ifdef DEBUG_ULTRASONIC
@@ -204,19 +225,29 @@ void Ping()
   Serial.print(ul_Right_Echo_Time/148); //divide time by 148 to get distance in inches
   Serial.print(", cm: ");
   Serial.println(ul_Right_Echo_Time/58);
+  
+  Serial.print("LEFT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Left_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Left_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Left_Echo_Time/58);
+  
+  Serial.print("BACK");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Back_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Back_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Back_Echo_Time/58);
+  
+  Serial.println();
+  Serial.println();
 //#endif
 }  
 
-void walltracking()
-{
-  if(on track)
-  {
-    ui_Left_Motor_Speed
-  }
-  
-  
-  
-}
+
 
 
 
