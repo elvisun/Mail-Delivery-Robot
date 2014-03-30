@@ -1,0 +1,310 @@
+/*
+
+ MSE 2202 Project
+ Language: Arduino
+ 
+ 
+ */
+ 
+ #include <Servo.h>
+ #include <EEPROM.h>
+ #include <uSTimer2.h>
+ #include <CharliePlexM.h>
+ 
+Servo servo_LeftMotor;
+Servo servo_RightMotor;
+Servo servo_FrontMotor;
+Servo servo_BackMotor;
+
+Servo servo_PlatformMotor;
+
+void mydelay(long time) {
+  long current = millis();
+  	while (millis() - current < time) {};
+}
+
+boolean bt_Motors_Enabled = true;
+
+
+//port pin constants
+
+const int ci_Left_Motor = 11;
+const int ci_Right_Motor = 9;
+const int ci_Front_Motor = 8;
+const int ci_Back_Motor = 10;
+
+const int ci_Left_Encoder = 5;
+const int ci_Right_Encoder = 3;
+const int ci_Front_Encoder = 2;
+const int ci_Back_Encoder = 4;
+
+const int ci_Front_Ultrasonic_Ping = A5;   //input plug
+const int ci_Front_Ultrasonic_Data = 7;   //output plug
+const int ci_Left_Ultrasonic_Ping = A4;   //input plug
+const int ci_Left_Ultrasonic_Data = 6;   //output plug  //good
+
+const int ci_Right_Ultrasonic_Ping = A1;   //input plug
+const int ci_Right_Ultrasonic_Data = A0;   //output plug
+const int ci_Back_Ultrasonic_Ping = A3;   //input plug
+const int ci_Back_Ultrasonic_Data = A2;   //output plug
+
+
+const int startbutton = 12;
+
+unsigned long ul_Front_Echo_Time;
+unsigned long ul_Right_Echo_Time;
+unsigned long ul_Left_Echo_Time;
+unsigned long ul_Back_Echo_Time;
+
+unsigned int ui_Left_Motor_Speed=1500;
+unsigned int ui_Right_Motor_Speed=1500;
+unsigned int ui_Front_Motor_Speed=1500;
+unsigned int ui_Back_Motor_Speed=1500;
+
+unsigned long prev_time;
+
+
+void setup() {
+  Serial.begin(9600);
+  
+ CharliePlexM::setEncoders(ci_Left_Encoder, ci_Right_Encoder, ci_Front_Encoder,ci_Back_Encoder);
+    
+  
+  // set up ultrasonic
+  pinMode(ci_Front_Ultrasonic_Ping, OUTPUT);
+  pinMode(ci_Front_Ultrasonic_Data, INPUT);
+  pinMode(ci_Right_Ultrasonic_Ping, OUTPUT);
+  pinMode(ci_Right_Ultrasonic_Data, INPUT);
+
+
+  pinMode(ci_Back_Ultrasonic_Ping, OUTPUT);
+  pinMode(ci_Back_Ultrasonic_Data, INPUT);
+  pinMode(ci_Left_Ultrasonic_Ping, OUTPUT);
+  pinMode(ci_Left_Ultrasonic_Data, INPUT);
+
+
+
+  // set up drive motors
+  pinMode(ci_Left_Motor, OUTPUT);
+  servo_LeftMotor.attach(ci_Left_Motor);
+  pinMode(ci_Right_Motor, OUTPUT);
+  servo_RightMotor.attach(ci_Right_Motor);
+  pinMode(ci_Front_Motor, OUTPUT);
+  servo_FrontMotor.attach(ci_Front_Motor);
+  pinMode(ci_Back_Motor, OUTPUT);
+  servo_BackMotor.attach(ci_Back_Motor);
+
+                            
+  servo_FrontMotor.writeMicroseconds(1500);
+  servo_BackMotor.writeMicroseconds(1500);
+  servo_RightMotor.writeMicroseconds(1500);
+  servo_LeftMotor.writeMicroseconds(1500);                            
+                            
+  pinMode(ci_Left_Encoder, INPUT);
+  pinMode(ci_Right_Encoder, INPUT);
+  pinMode(ci_Back_Encoder, INPUT);
+  pinMode(ci_Front_Encoder, INPUT);
+ 
+ // Declare start push button 4 
+  pinMode(startbutton, INPUT);
+  digitalWrite(startbutton, HIGH);
+  
+  // Delay to allow time for the robot to start motion
+  while (digitalRead(startbutton) == HIGH) {
+  Ping();
+}
+ 
+  mydelay(3000);
+}
+
+
+  
+void loop()
+{
+  
+  long timer = millis();
+  boolean othermovement = false;
+
+  unsigned long ul_initLeftEncoder = CharliePlexM::ul_LeftEncoder_Count;
+  unsigned long ul_initRightEncoder = CharliePlexM::ul_RightEncoder_Count;
+    
+  ui_Left_Motor_Speed = 1890;
+  ui_Right_Motor_Speed = 1800;     
+ 
+  while (CharliePlexM::ul_RightEncoder_Count < 7000) {
+    
+   
+    if (millis() - timer > 1000) {
+       timer = millis();
+         
+        // Once every second 
+         
+        // Find the increase in encoder value
+        ul_initLeftEncoder = CharliePlexM::ul_LeftEncoder_Count - ul_initLeftEncoder;
+        ul_initRightEncoder = CharliePlexM::ul_RightEncoder_Count - ul_initRightEncoder;
+      
+        // Check if there was any other horizontal adjustments or pauses that might affect the encoder readings
+        if (!othermovement) {
+        if (ul_initLeftEncoder > 142) {
+            ui_Left_Motor_Speed -= 10;
+        } 
+        else if (ul_initLeftEncoder < 138) {
+            ui_Left_Motor_Speed += 10;
+        }
+        
+        if (ul_initRightEncoder > 142) {
+             ui_Right_Motor_Speed -= 10; 
+        } 
+        else if (ul_initRightEncoder < 138) {
+             ui_Right_Motor_Speed += 10; 
+        } 
+        }
+        
+      Serial.println(" ");
+      Serial.print("Left Encoder =  ");
+      Serial.println(CharliePlexM::ul_LeftEncoder_Count);
+      Serial.print("Right Encoder =  ");
+      Serial.println(CharliePlexM::ul_RightEncoder_Count);
+      
+      Serial.print("Left Encoder Increment =  ");
+      Serial.println(ul_initLeftEncoder);
+      Serial.print("Right Encoder Increment =  ");
+      Serial.println(ul_initRightEncoder);
+      
+      Serial.print("Left Motor Speed: \t");
+      Serial.println(ui_Left_Motor_Speed);
+      Serial.print("Right Motor Speed: \t");
+      Serial.println(ui_Right_Motor_Speed);
+      
+      
+        ul_initLeftEncoder = CharliePlexM::ul_LeftEncoder_Count;
+        ul_initRightEncoder = CharliePlexM::ul_RightEncoder_Count;
+        
+        // Every second renew the status to false
+        othermovement = false;
+   }
+   
+   Ping();
+  if (ul_Front_Echo_Time/58 < 13) {
+        servo_FrontMotor.writeMicroseconds(1500);
+        servo_BackMotor.writeMicroseconds(1500);
+        servo_RightMotor.writeMicroseconds(1500);
+        servo_LeftMotor.writeMicroseconds(1500);
+        othermovement = true;
+  }
+  else if (ul_Left_Echo_Time/58 < 21) {
+        servo_FrontMotor.writeMicroseconds(1800);
+        servo_BackMotor.writeMicroseconds(1800);
+        servo_RightMotor.writeMicroseconds(1500);
+        servo_LeftMotor.writeMicroseconds(1500);
+        othermovement = true;
+  }
+  else if (ul_Left_Echo_Time/58 > 24) {
+        servo_FrontMotor.writeMicrose
+        conds(1200);
+        servo_BackMotor.writeMicroseconds(1200);
+        servo_RightMotor.writeMicroseconds(1500);
+        servo_LeftMotor.writeMicroseconds(1500);
+        othermovement = true;
+  }
+  else {
+        servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+        servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+        servo_FrontMotor.writeMicroseconds(1500);
+        servo_BackMotor.writeMicroseconds(1500);    
+ }
+      
+     
+  }
+  
+  //Stop the motor at this stage
+        servo_FrontMotor.writeMicroseconds(1500);
+        servo_BackMotor.writeMicroseconds(1500);
+        servo_RightMotor.writeMicroseconds(1500);
+        servo_LeftMotor.writeMicroseconds(1500);
+  
+  Serial.print("Right Motor Speed: \t");
+  Serial.println(ui_Right_Motor_Speed);
+  Serial.print("Left Motor Speed: \t");
+  Serial.println(ui_Left_Motor_Speed);
+  mydelay(1000);
+ 
+}
+
+
+void Ping()
+{
+  //Ping Ultrasonic
+  //Send the Ultrasonic Range Finder a 10 microsecond pulse per tech spec
+  digitalWrite(ci_Front_Ultrasonic_Ping, HIGH);
+  delayMicroseconds(10);  //The 10 microsecond pause where the pulse in "high"
+  digitalWrite(ci_Front_Ultrasonic_Ping, LOW);
+  //use command pulseIn to listen to Ultrasonic_Data pin to record the
+  //time that it takes from when the Pin goes HIGH until it goes LOW 
+  ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 10000);
+  
+    mydelay(1);
+  digitalWrite(ci_Right_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
+  ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 10000);
+  
+  
+
+    mydelay(1);
+  digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Left_Ultrasonic_Ping, LOW);
+  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 10000);
+  
+    mydelay(1);
+    
+  digitalWrite(ci_Back_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Back_Ultrasonic_Ping, LOW);
+  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 10000);
+  
+
+  // Print Sensor Readings
+  Serial.print("FRONT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Front_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Front_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Front_Echo_Time/58); //divide time by 58 to get distance in cm 
+
+  Serial.print("RIGHT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Right_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Right_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Right_Echo_Time/58);
+  
+  Serial.print("LEFT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Left_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Left_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Left_Echo_Time/58);
+  
+  Serial.print("BACK");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Back_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Back_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Back_Echo_Time/58);
+  
+  Serial.println();
+  Serial.println();
+  
+ 
+}  
+
+
+
+
+
