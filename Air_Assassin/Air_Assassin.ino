@@ -44,11 +44,16 @@ unsigned int ui_Switch_Data;
 
 unsigned int prev_time;
 
+
+int location=1;
+int destination=2;
+
 int arm_angle=0;
 bool im_here=0;   //when see the light
+bool letter_exist=0;   //if there is letter in the mail box
 bool holding_letter=0;
 int room_number=0;
-
+int counter=1;
 
 void setup() {
   Serial.begin(9600);
@@ -92,21 +97,24 @@ void loop()
     //stop the motor
     rotate_left();
     //move to adjust the position
-    if(holding_letter==0)
-    retrieve_letter();
-    else
+    if(holding_letter==1)
     dispense_letter();
+    if(letter_exist==1)
+    retrieve_letter();
+    rotate_right();
   }
+  
+ 
+  //depends on what room it's going, rotate the arm to the correct position
+  
+  
+  
+  
+  
+  
   
   //keep going
   
-
-
-
-
-
-
-
 
   /*
   if(ui_Switch_Data==0)
@@ -140,11 +148,22 @@ void read_led()
 {
   ui_Left_Light_Sensor_Data=analogRead(ci_Left_Light_Sensor);
   ui_Right_Light_Sensor_Data=analogRead(ci_Right_Light_Sensor);
-  if(ui_Left_Light_Sensor_Data<30)
-  //call motor stop;
-  if((ui_Left_Light_Sensor_Data<30)&&(ui_Right_Light_Sensor_Data<30))
-  im_here=1;
+  if(ui_Left_Light_Sensor_Data<30);
+  {
+    if(counter==1)
+    {
+    im_here=1;
+    //call motor stop;
+    Serial.write(1); //1 means stop the motor
+    }
+    counter--;
+  }
   
+  //wait there for 5 seconds, if the right light is on, three is a letter
+  if((ui_Left_Light_Sensor_Data<30)&&(ui_Right_Light_Sensor_Data<30))
+    letter_exist=1;
+  else
+    update_destination();
   //if the robot moves too fast for it to stop, make the motor go slow once the right sensor sees the left light
 }
 
@@ -205,8 +224,18 @@ void read_letter()
   room_number=2;
   if(ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data>400))   //white white  00=room 1
   room_number=1;
+  destination=room_number;
+  counter=abs(destination-location);
+  Serial.write(room_number+10);
 }
 
+void update_destination()
+{
+  if(destination<3)
+  destination+=destination;
+  else
+  destination=1;
+}
 void turning_right_reset()
 {
   rotate_right();
