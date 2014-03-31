@@ -54,10 +54,11 @@ bool letter_exist=0;   //if there is letter in the mail box
 bool holding_letter=0;
 int room_number=0;
 int counter=1;
+unsigned long led_wait=0;
 
 void setup() {
   Serial.begin(9600);
-  
+  Serial.print(ui_Left_Light_Sensor_Data);
   // set up ultrasonic
 
 
@@ -80,37 +81,51 @@ void setup() {
 
 void loop()
 {
+  Serial.println("start");
   prev_time=millis();
   
   
-  //position arm to be at initial position  asdjflkwejrkl???
+  //position arm to be at initial position  
+
   //while driving straight
   if(im_here==0)
   {
+    Serial.write(200);
     //force the robot to move for couple seconds so it doesnt read the lights again, have to go pass the right led
     // move_forward_for_2_second();
-    read_led();
+    if((millis()-led_wait)>6000)
+      read_led();
+    Serial.println("im_here == 0");
   }
   
   if(im_here==1)
   {
     //stop the motor
-    rotate_left();
-    //move to adjust the position
-    if(holding_letter==1)
-    dispense_letter();
-    if(letter_exist==1)
-    retrieve_letter();
-    rotate_right();
+    if((holdding_letter==0)&&(letter_exist==0))
+    {
+      im_here=0;
+    }
+    else
+    {
+      rotate_left();
+      //move to adjust the position
+      if(holding_letter==1)
+      {
+        delay(3000);
+        dispense_letter();
+      }
+      if(letter_exist==1)
+      {
+        delay(3000);
+        retrieve_letter();
+      }
+      rotate_right();
+    }
+    led_wait=millis();
+    Serial.println("im_here == 1");
   }
-  
- 
+}
   //depends on what room it's going, rotate the arm to the correct position
-  
-  
-  
-  
-  
   
   
   //keep going
@@ -141,41 +156,67 @@ void loop()
   Serial.print("Switch ");
   Serial.println(ui_Switch_Data,DEC);
 */
-}
 
 
 void read_led()
 {
+  Serial.println("read_led");
   ui_Left_Light_Sensor_Data=analogRead(ci_Left_Light_Sensor);
   ui_Right_Light_Sensor_Data=analogRead(ci_Right_Light_Sensor);
-  if(ui_Left_Light_Sensor_Data<30);
+
+  Serial.print("LED value");
+  Serial.print(ui_Left_Light_Sensor_Data);
+  Serial.print("    ");
+  Serial.print(ui_Right_Light_Sensor_Data);
+  
+  if(ui_Left_Light_Sensor_Data<20)
   {
     if(counter==1)
     {
-    im_here=1;
-    //call motor stop;
-    Serial.write(1); //1 means stop the motor
+      im_here=1;
+      //call motor stop;
+      Serial.write(1); //1 means stop the motor
+      prev_time=millis();
+      while(((millis()-prev_time)<3000))
+      {
+        if((ui_Left_Light_Sensor_Data<25)&&(ui_Right_Light_Sensor_Data<25))
+        {
+          letter_exist=1;
+          Serial.println("letter exist!");
+          break;
+        }
+      }
+      if(letter_exist==0)
+      {
+        update_destination();
+        Serial.println("NO Letter!!!");
+      }
+      
+      
     }
     counter--;
   }
-  
+
   //wait there for 5 seconds, if the right light is on, three is a letter
-  if((ui_Left_Light_Sensor_Data<30)&&(ui_Right_Light_Sensor_Data<30))
-    letter_exist=1;
-  else
-    update_destination();
+
   //if the robot moves too fast for it to stop, make the motor go slow once the right sensor sees the left light
 }
 
 void rotate_left()
 {
+    Serial.println("rotate_left");
   servo_Platform_Motor.writeMicroseconds(1350);
-  delay(100);
+  delay(1000);
   ui_Switch_Data = analogRead(ci_Switch);
-  while(ui_Switch_Data==0)
+  Serial.print("switch value:");
+  Serial.println(ui_Switch_Data);
+  while(ui_Switch_Data<50)
   {
     servo_Platform_Motor.writeMicroseconds(1350);
     ui_Switch_Data = analogRead(ci_Switch);          //have to read the switch every time
+    
+  Serial.print("switch value:");
+  Serial.println(ui_Switch_Data);
   }
   servo_Platform_Motor.writeMicroseconds(1500);
   arm_angle=arm_angle-90;
@@ -183,13 +224,20 @@ void rotate_left()
 
 void rotate_right()
 {
+    Serial.println("rotate_right");
   servo_Platform_Motor.writeMicroseconds(1650);
-  delay(100);
+  delay(1000);
   ui_Switch_Data = analogRead(ci_Switch);
-  while(ui_Switch_Data==0)
+  
+  Serial.print("switch value:");
+  Serial.println(ui_Switch_Data);
+  while(ui_Switch_Data<50)
   {
     servo_Platform_Motor.writeMicroseconds(1650);
     ui_Switch_Data = analogRead(ci_Switch);          //have to read the switch every time
+    
+  Serial.print("switch value:");
+  Serial.println(ui_Switch_Data);
   }
   servo_Platform_Motor.writeMicroseconds(1500);
   arm_angle=arm_angle+90;
@@ -197,44 +245,52 @@ void rotate_right()
 
 void retrieve_letter()
 {
+    Serial.println("retrieve_letter");
  servo_Grab_Motor.writeMicroseconds(1200);  //pulling in 
  delay(2000);
  servo_Grab_Motor.writeMicroseconds(1500);  
  im_here=0; // or something else that makes it keep going 
  read_letter();
+ letter_exist=0;
+ holding_letter=1;
 }
 
 void dispense_letter()
 {
+    Serial.println("dispense_letter");
  servo_Grab_Motor.writeMicroseconds(1800);  //pushing out
  delay(2000);
  servo_Grab_Motor.writeMicroseconds(1500);
+ holding_letter=0;
  im_here=0; // or something else that makes it keep going 
 }
 
 void read_letter()
 {
+    Serial.println("read letter");
   ui_Left_Line_Tracker_Data = analogRead(ci_Left_Line_Tracker);
   ui_Right_Line_Tracker_Data = analogRead(ci_Right_Line_Tracker);
-  if(ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data>400))   //black black  11=room 4
+  if((ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data>400))   //black black  11=room 4
   room_number=4;
-  if(ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data<400))   //black white  10=room 3
+  if((ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data<400))   //black white  10=room 3
   room_number=3;
-  if(ui_Left_Line_Tracker_Data<400)&&(ui_Right_Line_Tracker_Data>400))   //white black  01=room 2
+  if((ui_Left_Line_Tracker_Data<400)&&(ui_Right_Line_Tracker_Data>400))   //white black  01=room 2
   room_number=2;
-  if(ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data>400))   //white white  00=room 1
+  if((ui_Left_Line_Tracker_Data>400)&&(ui_Right_Line_Tracker_Data>400))   //white white  00=room 1
   room_number=1;
   destination=room_number;
   counter=abs(destination-location);
-  Serial.write(room_number+10);
+  Serial.write(destination+10);                //sends destination to the bottom
 }
 
 void update_destination()
 {
+  Serial.println("update destination");
   if(destination<3)
   destination+=destination;
   else
   destination=1;
+  Serial.write(destination+10); 
 }
 void turning_right_reset()
 {

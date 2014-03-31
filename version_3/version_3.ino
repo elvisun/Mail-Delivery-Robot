@@ -40,8 +40,8 @@ const int ci_Back_Encoder = 4;
 
 const int ci_Front_Ultrasonic_Ping = A5;   //input plug
 const int ci_Front_Ultrasonic_Data = 7;   //output plug
-const int ci_Right_Ultrasonic_Ping = A4;   //input plug
-const int ci_Right_Ultrasonic_Data = 6;   //output plug
+const int ci_Left_Ultrasonic_Ping = A4;   //input plug
+const int ci_Left_Ultrasonic_Data = 6;   //output plug
 
 const int ci_Right_Ultrasonic_Ping = A1;   //input plug
 const int ci_Right_Ultrasonic_Data = A0;   //output plug
@@ -67,7 +67,9 @@ int location=1;
 int destination=2;
 int communication=0;
 int final_destination=2;
-int travel=1;
+int travel=1;                      //tracks the hallway we are in
+int prev_distance=0;               //tracks the previous distance of the left
+int go=1;
 
 boolean reached = false;
 int currentmicros = 1500;
@@ -77,11 +79,7 @@ void setup()
 
 {
   Serial.begin(9600);
-  
-  CharliePlexM::setBtn(13,13,13,13,13);     // Required to have Encoders working :(
-  CharliePlexM::setEncoders(ci_Front_Encoder,ci_Back_Encoder);
-  
-  
+
   // set up ultrasonic
   pinMode(ci_Front_Ultrasonic_Ping, OUTPUT);
   pinMode(ci_Front_Ultrasonic_Data, INPUT);
@@ -114,9 +112,10 @@ void setup()
   digitalWrite(startbutton, HIGH);
   
   // Delay to allow time for the robot to start motion
-  while (digitalRead(startbutton) == HIGH) {}
+/*  while (digitalRead(startbutton) == HIGH) {}
   prev_time = millis();
   while (millis() - prev_time < 3000) {};
+  */
     
 }
 
@@ -125,36 +124,13 @@ void setup()
 void loop()
 {
   
-  boolean calibrated = false;
-  long timer = millis();
-  long leftmicros = 1800;
-  long rightmicros = 1800;  
-  while (!reached && CharliePlexM::ul_RightEncoder_Count < 7000) {
-    
-
-  
-  // Back encoder not working :(
-  
-  Serial.println(" ");
-      Serial.print("Encoder 1 =  ");
-      Serial.println(CharliePlexM::ul_LeftEncoder_Count);
-      Serial.print("Encoder 2 =  ");
-      Serial.println(CharliePlexM::ul_RightEncoder_Count);
-   
-   if (millis() - timer > 1000) {
-       timer = millis();
-       calibrated = false;
-   }
-   
-   initLeftEncoder = CharliePlexM::u1_LeftEncoder_Count;
-   initRightEncoder = CharliePlexM::ul_RightEncoder_Count;
-
    Ping();
-   
    if(Serial.available())
      Translation();
    
-   if(location==1)&&(destination==2)
+ if(go==1)
+ {
+   if((location==1)&&(destination==2))
    {
      drive_forward();
      //after exiting the while loop, should stop the motor
@@ -169,13 +145,13 @@ void loop()
      if(travel==1) // we are at hallway 1
      {
        drive_forward();
-       check_doors();
+       check_doors();  
      }
      else if(travel==2)
      {
        move_right();      //after ultral sonic find the wall, it changes travel from 2 to 3
      }
-     else if(traval==3)
+     else if(travel==3)
      {
        drive_right();
      }
@@ -186,19 +162,18 @@ void loop()
      if(travel==3) // we are at hallway 1
      {
        drive_left();
-       check_wall();     //when it loses the wall, change travel to 2
+       check_wall();     //when it loses the wall, change travel to 2   
      }
      else if(travel==2)
      {
        move_left();      //after ultral sonic find the wall, it changes travel from 2 to 1
      }
-     else if(traval==3)
+     else if(travel==3)
      {
-       drive_backwards();
+       drive_backward();
      }  
    }
-   
-   
+
    else if(location==destination)
    {
      if(destination!=final_destination)
@@ -207,85 +182,293 @@ void loop()
      }
    }
    
-   
-   
    // write the motor speed
+   servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
+   servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
+   servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+   servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+ }
+}
+
+void drive_forward()
+{
+   if (ul_Front_Echo_Time/58 < 13)
+   {
+     complete_stop();
+   }
+   if (ul_Left_Echo_Time/58 < 21)     //too close, move right
+   {
+     ui_Left_Motor_Speed=1500;
+     ui_Right_Motor_Speed=1500;
+     ui_Front_Motor_Speed=1800;
+     ui_Back_Motor_Speed=1800;
+   }
+   else if (ul_Left_Echo_Time/58 > 24)     //too far, move left
+   {
+     ui_Left_Motor_Speed=1500;
+     ui_Right_Motor_Speed=1500;
+     ui_Front_Motor_Speed=1200;
+     ui_Back_Motor_Speed=1200;
+   }
+   else 
+   {
+     ui_Left_Motor_Speed=1800;
+     ui_Right_Motor_Speed=1800;
+     ui_Front_Motor_Speed=1500;
+     ui_Back_Motor_Speed=1500; 
+   }
+}
+
+void drive_backward()
+{
+   if (ul_Back_Echo_Time/58 < 13)
+   {
+     complete_stop();
+   }
+   if (ul_Left_Echo_Time/58 < 20)     //too close, move right
+   {
+     ui_Left_Motor_Speed=1500;
+     ui_Right_Motor_Speed=1500;
+     ui_Front_Motor_Speed=1750;
+     ui_Back_Motor_Speed=1750;
+   }
+   else if (ul_Left_Echo_Time/58 > 25)     //too far, move left
+   {
+     ui_Left_Motor_Speed=1500;
+     ui_Right_Motor_Speed=1500;
+     ui_Front_Motor_Speed=1200;
+     ui_Back_Motor_Speed=1200;
+   }
+   else 
+   {
+     ui_Left_Motor_Speed=1250;
+     ui_Right_Motor_Speed=1250;
+     ui_Front_Motor_Speed=1500;
+     ui_Back_Motor_Speed=1500; 
+   }
+}
+
+void drive_right()
+{
+   if (ul_Right_Echo_Time/58 < 13)
+   {
+     complete_stop();
+   }
+   if (ul_Front_Echo_Time/58 < 21)     //too close, move right
+   {
+     ui_Left_Motor_Speed=1200;
+     ui_Right_Motor_Speed=1200;
+     ui_Front_Motor_Speed=1500;
+     ui_Back_Motor_Speed=1500;
+   }
+   else if (ul_Front_Echo_Time/58 > 24)     //too far, move left
+   {
+     ui_Left_Motor_Speed=1800;
+     ui_Right_Motor_Speed=1800;
+     ui_Front_Motor_Speed=1500;
+     ui_Back_Motor_Speed=1500;
+   }
+   else 
+   {
+     ui_Left_Motor_Speed=1500;
+     ui_Right_Motor_Speed=1500;
+     ui_Front_Motor_Speed=1800;
+     ui_Back_Motor_Speed=1800; 
+   }
+}
+
+void drive_left()
+{
+   if (ul_Left_Echo_Time/58 < 13)
+   {
+     complete_stop();
+   }
+   if (ul_Front_Echo_Time/58 < 21)     //too close, move right
+   {
+     ui_Left_Motor_Speed=1200;
+     ui_Right_Motor_Speed=1200;
+     ui_Front_Motor_Speed=1500;
+     ui_Back_Motor_Speed=1500;
+   }
+   else if (ul_Front_Echo_Time/58 > 24)     //too far, move left
+   {
+     ui_Left_Motor_Speed=1800;
+     ui_Right_Motor_Speed=1800;
+     ui_Front_Motor_Speed=1500;
+     ui_Back_Motor_Speed=1500;
+   }
+   else 
+   {
+     ui_Left_Motor_Speed=1500;
+     ui_Right_Motor_Speed=1500;
+     ui_Front_Motor_Speed=1200;
+     ui_Back_Motor_Speed=1200; 
+   }
+}
+
+void move_right()
+{
+   ui_Left_Motor_Speed=1500;
+   ui_Right_Motor_Speed=1500;
+   ui_Front_Motor_Speed=1800;
+   ui_Back_Motor_Speed=1800;
    
+   if(ul_Front_Echo_Time/58<30)
+   travel=3;
+}
+
+void move_left()
+{
+   ui_Left_Motor_Speed=1500;
+   ui_Right_Motor_Speed=1500;
+   ui_Front_Motor_Speed=1200;
+   ui_Back_Motor_Speed=1200;
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-  if (ul_Front_Echo_Time/58 < 13) {
-        servo_FrontMotor.writeMicroseconds(1500);
-        servo_BackMotor.writeMicroseconds(1500);
-        servo_RightMotor.writeMicroseconds(1500);
-        servo_LeftMotor.writeMicroseconds(1500);
+   if(ul_Left_Echo_Time/58<25)
+   travel=1;
+}
+
+void check_wall()
+{
+  if(ul_Front_Echo_Time/58>30)
+  travel=2;
+}
+
+void check_doors()
+{
+  if((prev_distance-ul_Left_Echo_Time)>232)       //232=4*58, 4cm
+    travel=2;
+  prev_distance=ul_Left_Echo_Time/58;
+}
+
+
+void Translation()
+{
+  communication=Serial.read(); 
+  if(communication==1)           // top sends signal to stop
+  {
+    location=destination;
+    complete_stop();
+    go=0;
   }
-  if (ul_Right_Echo_Time/58 < 21) {
-        servo_FrontMotor.writeMicroseconds(1800);
-        servo_BackMotor.writeMicroseconds(1800);
-        servo_RightMotor.writeMicroseconds(1500);
-        servo_LeftMotor.writeMicroseconds(1500);
-        Ping();
+  else if(communication==11)     // top sends signal for the change in destination
+  { 
+    final_destination=1;
+    if(location==3)
+    destination=2;  
+    else
+    destination=1;
   }
-  else if (ul_Right_Echo_Time/58 > 24) {
-        servo_FrontMotor.writeMicroseconds(1200);
-        servo_BackMotor.writeMicroseconds(1200);
-        servo_RightMotor.writeMicroseconds(1500);
-        servo_LeftMotor.writeMicroseconds(1500);
+  else if(communication==12)
+  {
+    destination=2;
   }
-  else {
-        
-        if ((CharliePlexM::u1_LeftEncoder_Count - initLeftEncoder) > (CharliePlexM::ul_RightEncoder_Count - initRightEncoder) + 20) {
-          if (!calibrated) {   
-             rightmicros += 20; 
-             leftmicros -= 20;
-             calibrated = true;
-               Serial.println(" ");
-      Serial.print("Micros 1 =  ");
-      Serial.println(CharliePlexM::ul_LeftEncoder_Count);
-      Serial.print("Micros 2 =  ");
-      Serial.println(CharliePlexM::ul_RightEncoder_Count);
-          }
-        } 
-        
-        else if ((CharliePlexM::u1_LeftEncoder_Count - initLeftEncoder) / (millis() - timer) + 20 < (CharliePlexM::ul_RightEncoder_Count - initRightEncoder)/(millis() - timer)) {
-          if (!calibrated) {   
-             rightmicros -= 20; 
-             leftmicros += 20;
-             calibrated = true;
-          }
-        } 
-        
-        servo_RightMotor.writeMicroseconds(rightmicros);
-        servo_LeftMotor.writeMicroseconds(lefttmicros);
-    }
+  else if(communication==13)
+  {
+    final_destination=3;
+    if(location==1)
+    destination=2;  
+    else
+    destination=3;
+  }
+  else if(communication==88)
+    command_forward();  
+  else if(communication==44)
+    command_left();
+  else if(communication==66)
+    command_right();
+  else if(communication==22)
+    command_back();
+  else if(communication==100)     //move from location to destination
+    go=1;
   
-  }
+  communication=0;
+  
+  //88 is move forward, 44 is left, 66 is right, 22 is back
+}
+
+void complete_stop()
+{
+    ui_Left_Motor_Speed=1500;
+    ui_Right_Motor_Speed=1500;
+    ui_Front_Motor_Speed=1500;
+    ui_Back_Motor_Speed=1500;
   
    servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
    servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
    servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
-   
+}
+
+void Ping()
+{
+  //Ping Ultrasonic
+  //Send the Ultrasonic Range Finder a 10 microsecond pulse per tech spec
+  digitalWrite(ci_Front_Ultrasonic_Ping, HIGH);
+  delayMicroseconds(10);  //The 10 microsecond pause where the pulse in "high"
+  digitalWrite(ci_Front_Ultrasonic_Ping, LOW);
+  //use command pulseIn to listen to Ultrasonic_Data pin to record the
+  //time that it takes from when the Pin goes HIGH until it goes LOW 
+  ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 10000);
+  
+  /*
+  digitalWrite(ci_Right_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
+  ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 10000);
+  */
+  
+  digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Left_Ultrasonic_Ping, LOW);
+  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 10000);
+  
+  digitalWrite(ci_Back_Ultrasonic_Ping, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(ci_Back_Ultrasonic_Ping, LOW);
+  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 10000);
+  
+
+  // Print Sensor Readings
+  //#ifdef DEBUG_ULTRASONIC
+  Serial.print("FRONT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Front_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Front_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Front_Echo_Time/58); //divide time by 58 to get distance in cm 
+
+  Serial.print("RIGHT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Right_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Right_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Right_Echo_Time/58);
+  
+  Serial.print("LEFT");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Left_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Left_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Left_Echo_Time/58);
+  
+  Serial.print("BACK");
+  Serial.print("Time (microseconds): ");
+  Serial.print(ul_Back_Echo_Time, DEC);
+  Serial.print(", Inches: ");
+  Serial.print(ul_Back_Echo_Time/148); //divide time by 148 to get distance in inches
+  Serial.print(", cm: ");
+  Serial.println(ul_Back_Echo_Time/58);
+  
+  Serial.println();
+  Serial.println();
+//#endif
+}  
+
+
   /*
    if (CharliePlexM::ul_RightEncoder_Count > 500) {
      if (!reached) {
@@ -352,7 +535,7 @@ if (CharliePlexM::ul_RightEncoder_Count > 1000) {
    
  
  
-}
+
 
   
   // RUNNING THE MOTOR
@@ -374,117 +557,6 @@ if (CharliePlexM::ul_RightEncoder_Count > 1000) {
    prevtime=millis();
    }
   */
-void Translation()
-{
-  communication=Serial.read(); 
-  if(communication==1)           // top sends signal to stop
-  {
-    location=destination;
-    complete_stop();
-  }
-  else if(communication==11)     // top sends signal for the change in destination
-  { 
-    final_destination=1;
-    if(location==3)
-    destination=2;  
-    else
-    destination=1;
-  }
-  else if(communication==12)
-  {
-    destination=2;
-  }
-  else if(communication==13)
-  {
-    final_destination=3;
-    if(location==1)
-    destination=2;  
-    else
-    destination=3;
-  }
-  communication=0;  
-}
-
-void complete_stop()
-{
-    ui_Left_Motor_Speed=1500;
-    ui_Right_Motor_Speed=1500;
-    ui_Front_Motor_Speed=1500;
-    ui_Back_Motor_Speed=1500;
-  
-   servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
-   servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
-   servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
-   servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
-}
-
-void Ping()
-{
-  //Ping Ultrasonic
-  //Send the Ultrasonic Range Finder a 10 microsecond pulse per tech spec
-  digitalWrite(ci_Front_Ultrasonic_Ping, HIGH);
-  delayMicroseconds(10);  //The 10 microsecond pause where the pulse in "high"
-  digitalWrite(ci_Front_Ultrasonic_Ping, LOW);
-  //use command pulseIn to listen to Ultrasonic_Data pin to record the
-  //time that it takes from when the Pin goes HIGH until it goes LOW 
-  ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 10000);
-  
-  
-  digitalWrite(ci_Right_Ultrasonic_Ping, HIGH); 
-  delayMicroseconds(10);
-  digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
-  ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 10000);
-  
-  digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
-  delayMicroseconds(10);
-  digitalWrite(ci_Left_Ultrasonic_Ping, LOW);
-  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 10000);
-  
-  digitalWrite(ci_Back_Ultrasonic_Ping, HIGH); 
-  delayMicroseconds(10);
-  digitalWrite(ci_Back_Ultrasonic_Ping, LOW);
-  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 10000);
-  
-
-  // Print Sensor Readings
-  //#ifdef DEBUG_ULTRASONIC
-  Serial.print("FRONT");
-  Serial.print("Time (microseconds): ");
-  Serial.print(ul_Front_Echo_Time, DEC);
-  Serial.print(", Inches: ");
-  Serial.print(ul_Front_Echo_Time/148); //divide time by 148 to get distance in inches
-  Serial.print(", cm: ");
-  Serial.println(ul_Front_Echo_Time/58); //divide time by 58 to get distance in cm 
-
-  Serial.print("RIGHT");
-  Serial.print("Time (microseconds): ");
-  Serial.print(ul_Right_Echo_Time, DEC);
-  Serial.print(", Inches: ");
-  Serial.print(ul_Right_Echo_Time/148); //divide time by 148 to get distance in inches
-  Serial.print(", cm: ");
-  Serial.println(ul_Right_Echo_Time/58);
-  
-  Serial.print("LEFT");
-  Serial.print("Time (microseconds): ");
-  Serial.print(ul_Left_Echo_Time, DEC);
-  Serial.print(", Inches: ");
-  Serial.print(ul_Left_Echo_Time/148); //divide time by 148 to get distance in inches
-  Serial.print(", cm: ");
-  Serial.println(ul_Left_Echo_Time/58);
-  
-  Serial.print("BACK");
-  Serial.print("Time (microseconds): ");
-  Serial.print(ul_Back_Echo_Time, DEC);
-  Serial.print(", Inches: ");
-  Serial.print(ul_Back_Echo_Time/148); //divide time by 148 to get distance in inches
-  Serial.print(", cm: ");
-  Serial.println(ul_Back_Echo_Time/58);
-  
-  Serial.println();
-  Serial.println();
-//#endif
-}  
-
 
 
 
