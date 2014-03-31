@@ -200,20 +200,20 @@ void drive_forward()
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1800;
-     ui_Back_Motor_Speed=1800;
+     ui_Front_Motor_Speed=2300;
+     ui_Back_Motor_Speed=2300;
    }
    else if (ul_Left_Echo_Time/58 > 24)     //too far, move left
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1200;
-     ui_Back_Motor_Speed=1200;
+     ui_Front_Motor_Speed=700;
+     ui_Back_Motor_Speed=700;
    }
    else 
    {
-     ui_Left_Motor_Speed=1800;
-     ui_Right_Motor_Speed=1800;
+     ui_Left_Motor_Speed=2300;
+     ui_Right_Motor_Speed=2300;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500; 
    }
@@ -229,20 +229,20 @@ void drive_backward()
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1750;
-     ui_Back_Motor_Speed=1750;
+     ui_Front_Motor_Speed=2300;
+     ui_Back_Motor_Speed=2300;
    }
    else if (ul_Left_Echo_Time/58 > 25)     //too far, move left
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1200;
-     ui_Back_Motor_Speed=1200;
+     ui_Front_Motor_Speed=700;
+     ui_Back_Motor_Speed=700;
    }
    else 
    {
-     ui_Left_Motor_Speed=1250;
-     ui_Right_Motor_Speed=1250;
+     ui_Left_Motor_Speed=700;
+     ui_Right_Motor_Speed=700;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500; 
    }
@@ -256,15 +256,15 @@ void drive_right()
    }
    if (ul_Front_Echo_Time/58 < 21)     //too close, move right
    {
-     ui_Left_Motor_Speed=1200;
-     ui_Right_Motor_Speed=1200;
+     ui_Left_Motor_Speed=700;
+     ui_Right_Motor_Speed=700;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
    }
    else if (ul_Front_Echo_Time/58 > 24)     //too far, move left
    {
-     ui_Left_Motor_Speed=1800;
-     ui_Right_Motor_Speed=1800;
+     ui_Left_Motor_Speed=2300;
+     ui_Right_Motor_Speed=2300;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
    }
@@ -272,8 +272,8 @@ void drive_right()
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1800;
-     ui_Back_Motor_Speed=1800; 
+     ui_Front_Motor_Speed=2300;
+     ui_Back_Motor_Speed=2300; 
    }
 }
 
@@ -285,24 +285,24 @@ void drive_left()
    }
    if (ul_Front_Echo_Time/58 < 21)     //too close, move right
    {
-     ui_Left_Motor_Speed=1200;
-     ui_Right_Motor_Speed=1200;
+     ui_Left_Motor_Speed=700;
+     ui_Right_Motor_Speed=700;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
    }
    else if (ul_Front_Echo_Time/58 > 24)     //too far, move left
    {
-     ui_Left_Motor_Speed=1800;
-     ui_Right_Motor_Speed=1800;
+     ui_Left_Motor_Speed=2300;
+     ui_Right_Motor_Speed=2300;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
    }
-   else 
+   else
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1200;
-     ui_Back_Motor_Speed=1200; 
+     ui_Front_Motor_Speed=700;
+     ui_Back_Motor_Speed=700; 
    }
 }
 
@@ -310,8 +310,8 @@ void move_right()
 {
    ui_Left_Motor_Speed=1500;
    ui_Right_Motor_Speed=1500;
-   ui_Front_Motor_Speed=1800;
-   ui_Back_Motor_Speed=1800;
+   ui_Front_Motor_Speed=2300;
+   ui_Back_Motor_Speed=2300;
    
    if(ul_Front_Echo_Time/58<30)
    travel=3;
@@ -321,8 +321,8 @@ void move_left()
 {
    ui_Left_Motor_Speed=1500;
    ui_Right_Motor_Speed=1500;
-   ui_Front_Motor_Speed=1200;
-   ui_Back_Motor_Speed=1200;
+   ui_Front_Motor_Speed=700;
+   ui_Back_Motor_Speed=700;
    
    if(ul_Left_Echo_Time/58<25)
    travel=1;
@@ -371,7 +371,7 @@ void Translation()
     else
     destination=3;
   }
-  else if(communication==88)
+/*  else if(communication==88)
     command_forward();  
   else if(communication==44)
     command_left();
@@ -379,9 +379,9 @@ void Translation()
     command_right();
   else if(communication==22)
     command_back();
+    */
   else if(communication==100)     //move from location to destination
     go=1;
-  
   communication=0;
   
   //88 is move forward, 44 is left, 66 is right, 22 is back
@@ -409,28 +409,29 @@ void Ping()
   digitalWrite(ci_Front_Ultrasonic_Ping, LOW);
   //use command pulseIn to listen to Ultrasonic_Data pin to record the
   //time that it takes from when the Pin goes HIGH until it goes LOW 
-  ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 10000);
+  ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 5000);
   
   /*
   digitalWrite(ci_Right_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
-  ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 10000);
+  ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 5000);
   */
   
   digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Left_Ultrasonic_Ping, LOW);
-  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 10000);
+  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 5000);
   
   digitalWrite(ci_Back_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Back_Ultrasonic_Ping, LOW);
-  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 10000);
+  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 5000);
   
 
   // Print Sensor Readings
   //#ifdef DEBUG_ULTRASONIC
+  /*
   Serial.print("FRONT");
   Serial.print("Time (microseconds): ");
   Serial.print(ul_Front_Echo_Time, DEC);
@@ -465,6 +466,7 @@ void Ping()
   
   Serial.println();
   Serial.println();
+  */
 //#endif
 }  
 
@@ -476,7 +478,7 @@ void Ping()
        servo_FrontMotor.writeMicroseconds(currentmicros);
        servo_BackMotor.writeMicroseconds(currentmicros);
        prev_time=millis();
-       while((millis()-prev_time)<2000) {};
+       while((millis()-prev_time)<2300) {};
        reached = true;
      }
        currentmicros = 1500;
@@ -485,7 +487,7 @@ void Ping()
    }
   
   
-if (CharliePlexM::ul_RightEncoder_Count > 1000) {
+if (CharliePlexM::ul_RightEncoder_Count > 500) {
          servo_FrontMotor.writeMicroseconds(1500);
        servo_BackMotor.writeMicroseconds(1500);
   while (true) {}
@@ -495,34 +497,34 @@ if (CharliePlexM::ul_RightEncoder_Count > 1000) {
   //Ping();
 /*
    prev_time=millis();
-   while((millis()-prev_time)<2000)
+   while((millis()-prev_time)<2300)
    {
-   servo_LeftMotor.writeMicroseconds(1800);
-   servo_RightMotor.writeMicroseconds(1800);
+   servo_LeftMotor.writeMicroseconds(2300);
+   servo_RightMotor.writeMicroseconds(2300);
    servo_FrontMotor.writeMicroseconds(1500);
    servo_BackMotor.writeMicroseconds(1500);
    }
    
    prev_time=millis();
-   while((millis()-prev_time)<2000)
+   while((millis()-prev_time)<2300)
    {
    servo_LeftMotor.writeMicroseconds(1500);
    servo_RightMotor.writeMicroseconds(1500);
-   servo_FrontMotor.writeMicroseconds(1800);
-   servo_BackMotor.writeMicroseconds(1800);
+   servo_FrontMotor.writeMicroseconds(2300);
+   servo_BackMotor.writeMicroseconds(2300);
    }
    
    prev_time=millis();
-   while((millis()-prev_time)<2000)
+   while((millis()-prev_time)<2300)
    {
-   servo_LeftMotor.writeMicroseconds(1200);
-   servo_RightMotor.writeMicroseconds(1200);
+   servo_LeftMotor.writeMicroseconds(500);
+   servo_RightMotor.writeMicroseconds(500);
    servo_FrontMotor.writeMicroseconds(1500);
    servo_BackMotor.writeMicroseconds(1500);
    }
    
    prev_time=millis();
-   while((millis()-prev_time)<2000)
+   while((millis()-prev_time)<2300)
    {
    servo_LeftMotor.writeMicroseconds(1500);
    servo_RightMotor.writeMicroseconds(1500);
@@ -544,14 +546,14 @@ if (CharliePlexM::ul_RightEncoder_Count > 1000) {
    prevtime=millis();
    while(1)
    {
-   if((millis()-prevtime)<1000)
-   { servo_LeftMotor.writeMicroseconds(1800);
-    servo_RightMotor.writeMicroseconds(1800);
+   if((millis()-prevtime)<500)
+   { servo_LeftMotor.writeMicroseconds(2300);
+    servo_RightMotor.writeMicroseconds(2300);
    }
-   else if((millis()-prevtime)<2000)
+   else if((millis()-prevtime)<2300)
    {
-    servo_FrontMotor.writeMicroseconds(1800);
-    servo_BackMotor.writeMicroseconds(1800);
+    servo_FrontMotor.writeMicroseconds(2300);
+    servo_BackMotor.writeMicroseconds(2300);
    }
    else
    prevtime=millis();
