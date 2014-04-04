@@ -60,6 +60,15 @@ unsigned int ui_Right_Motor_Speed=1500;
 unsigned int ui_Front_Motor_Speed=1500;
 unsigned int ui_Back_Motor_Speed=1500;
 
+unsigned long ul_init_LeftEncoder;
+unsigned long ul_init_RightEncoder;
+unsigned long ul_init_LeftEncoder;
+unsigned long ul_init_RightEncoder;
+
+ul_init_LeftEncoder = CharliePlexM::ul_LeftEncoder_Count;
+ul_init_RightEncoder = CharliePlexM::ul_RightEncoder_Count;
+ul_init_FrontEncoder = CharliePlexM::ul_Encoder3_Count;
+ul_init_BackEncoder = CharliePlexM::ul_Encoder4_Count;
 
 unsigned long prev_time;
 
@@ -80,6 +89,9 @@ void setup()
 {
   Serial.begin(9600);
 
+ CharliePlexM::setEncoders(ci_Left_Encoder, ci_Right_Encoder, ci_Front_Encoder,ci_Back_Encoder);
+    
+    
   // set up ultrasonic
   pinMode(ci_Front_Ultrasonic_Ping, OUTPUT);
   pinMode(ci_Front_Ultrasonic_Data, INPUT);
@@ -371,20 +383,126 @@ void Translation()
     else
     destination=3;
   }
-/*  else if(communication==88)
-    command_forward();  
-  else if(communication==44)
-    command_left();
   else if(communication==66)
-    command_right();
-  else if(communication==22)
-    command_back();
-    */
+    command_mid_to_out();  
+  else if(communication==44)
+    command_mid_to_in();
+  else if(communication==88)
+    command_in_to_out();
   else if(communication==100)     //move from location to destination
     go=1;
   communication=0;
+}
+
+void command_mid_to_out()
+{
+  if(location==3)
+  {
+    command_right(225);
+    command_forward(100);       //???????????????????
+    delay(5000);
+    command_backward(100);
+    //drive right for ...
+    //drive forward for ...
+    //delay(5000);
+    //drive backward for...
+  }
+  else
+  {
+    command_forward(225);
+    command_left(100);       //???????????????????
+    delay(5000);
+    command_right(100);
+    //drive forward for ...
+    //drive left for ...
+    //delay(5000);
+    //drive right for ...
+  }
+}
+
+void command_mid_to_in()
+{
+  if(location==3)
+  {
+        command_left(225);
+    command_forward(100);       //???????????????????
+    delay(5000);
+    command_backward(100);
+    //drive left for ...
+    //drive forward for ...
+    //delay(5000);
+    //drive back for...
+  }
+  else
+  {
+    command_backward(225);
+    command_left(100);       //???????????????????
+    delay(5000);
+    command_right(100);    
+    //drive back for ...
+    //drive left for ...
+    //delay(5000);
+    //drive right for ...
+  }
+}
+
+void command_in_to_out()
+{
+  if(location==3)
+  {
+    command_right(450);
+    command_forward(100);       //???????????????????
+    delay(5000);
+    command_backward(100);
+    //drive right for ...
+    //drive forward for ...
+    //delay(5000);
+    //drive back for..
+  }
+  else
+  {
+    command_backward(450);
+    command_left(100);       //???????????????????
+    delay(5000);
+    command_right(100);
+    //drive back for ...
+    //drive left for ...
+    //delay(5000);
+    //drive right for...
+  }
+}
+
+void command_forward(int ticks)
+{
+//asdasdfasdfsdf
+
+// make it move forward by (ticks) ticks
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
-  //88 is move forward, 44 is left, 66 is right, 22 is back
 }
 
 void complete_stop()

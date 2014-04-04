@@ -101,7 +101,7 @@ void loop()
   if(im_here==1)
   {
     //stop the motor
-    if((holdding_letter==0)&&(letter_exist==0))
+    if((holding_letter==0)&&(letter_exist==0))
     {
       im_here=0;
     }
@@ -121,6 +121,7 @@ void loop()
       }
       rotate_right();
     }
+    Serial.write(100);  // tell the bottom to go
     led_wait=millis();
     Serial.println("im_here == 1");
   }
@@ -174,6 +175,7 @@ void read_led()
     if(counter==1)
     {
       im_here=1;
+      location=destination;
       //call motor stop;
       Serial.write(1); //1 means stop the motor
       prev_time=millis();
