@@ -230,7 +230,7 @@ void drive_forward()
    }
    else 
    {
-     ui_Left_Motor_Speed=2000;
+     ui_Left_Motor_Speed=1950;
      ui_Right_Motor_Speed=2000;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500; 
@@ -666,12 +666,12 @@ void Ping()
   //time that it takes from when the Pin goes HIGH until it goes LOW 
   ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 5000);
   
-  /*
+  
   digitalWrite(ci_Right_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
   ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 5000);
-  */
+  
   
   digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
@@ -702,7 +702,7 @@ void Ping()
   Serial.print(ul_Right_Echo_Time/148); //divide time by 148 to get distance in inches
   Serial.print(", cm: ");
   Serial.println(ul_Right_Echo_Time/58);
-  */
+  
   Serial.print("LEFT");
   Serial.print("Time (microseconds): ");
   Serial.print(ul_Left_Echo_Time, DEC);
@@ -710,7 +710,7 @@ void Ping()
   Serial.print(ul_Left_Echo_Time/148); //divide time by 148 to get distance in inches
   Serial.print(", cm: ");
   Serial.println(ul_Left_Echo_Time/58);
-  /*
+  
   Serial.print("BACK");
   Serial.print("Time (microseconds): ");
   Serial.print(ul_Back_Echo_Time, DEC);
@@ -718,10 +718,10 @@ void Ping()
   Serial.print(ul_Back_Echo_Time/148); //divide time by 148 to get distance in inches
   Serial.print(", cm: ");
   Serial.println(ul_Back_Echo_Time/58);
-  */
-  Serial.println();
-  Serial.println();
   
+  Serial.println();
+  Serial.println();
+  */
 //#endif
 }
 
