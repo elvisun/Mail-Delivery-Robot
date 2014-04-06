@@ -141,7 +141,7 @@ ul_init_BackEncoder = CharliePlexM::ul_Encoder4_Count;
 
 void loop()
 {
-  
+
    Ping();
    if(Serial.available())
      Translation();
@@ -205,14 +205,24 @@ void loop()
    servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
    servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+   
+   
+   /*
+   while(CharliePlexM::ul_LeftEncoder_Count-CharliePlexM::ul_RightEncoder_Count)
+   {
+      
+     
+   }
+   */
  }
 }
 
 void drive_forward()
 {
-   if ((ul_Front_Echo_Time/58 < 13)&&(ul_Prev_Front_Echo_Time/58 < 13))
+   if ((ul_Front_Echo_Time/58 < 13)&&(ul_Prev_Front_Echo_Time/58 < 13)&(ul_Prev_Front_Echo_Time/58!=0))
    {
      complete_stop();
+     Serial.println("stop");
    }
    else if ((ul_Left_Echo_Time/58 < 19)&&(ul_Prev_Left_Echo_Time/58 < 19))     //too close, move right
    {
@@ -220,25 +230,29 @@ void drive_forward()
      ui_Right_Motor_Speed=1500;
      ui_Front_Motor_Speed=2000;
      ui_Back_Motor_Speed=2000;
+          Serial.println("moving right");
    }
    else if ((ul_Left_Echo_Time/58 > 26)&&(ul_Prev_Left_Echo_Time/58 > 26))     //too far, move left
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
      ui_Front_Motor_Speed=1000;
-     ui_Back_Motor_Speed=1000;
+     ui_Back_Motor_Speed=1150;
+          Serial.println("moving left");
    }
    else 
    {
-     ui_Left_Motor_Speed=1950;
-     ui_Right_Motor_Speed=2000;
+     ui_Left_Motor_Speed=1900;
+     ui_Right_Motor_Speed=2100;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500; 
+          Serial.println("driving straight");
    }
    servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
    servo_BackMotor.writeMicroseconds(ui_Back_Motor_Speed);
    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
    servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+   Serial.println();
 }
 
 void drive_backward()
@@ -513,10 +527,6 @@ void command_forward(long ticks)
 //  Serial.println(ui_Right_Motor_Speed);
 //  Serial.print("Left Motor Speed: \t");
 //  Serial.println(ui_Left_Motor_Speed);
-// 
-//
-
-
 }
 
 
@@ -555,8 +565,6 @@ void command_backward(long ticks)
 //  Serial.println(ui_Left_Motor_Speed);
 // 
 //
-
-
 }
 
 void command_right(long ticks)
@@ -686,7 +694,7 @@ void Ping()
 
   // Print Sensor Readings
   //#ifdef DEBUG_ULTRASONIC
-  /*
+  
   Serial.print("FRONT");
   Serial.print("Time (microseconds): ");
   Serial.print(ul_Front_Echo_Time, DEC);
@@ -721,7 +729,7 @@ void Ping()
   
   Serial.println();
   Serial.println();
-  */
+  
 //#endif
 }
 
