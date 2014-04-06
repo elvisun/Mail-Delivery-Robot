@@ -653,10 +653,8 @@ void complete_stop()
 
 void Ping()
 {
-  ul_Prev_Front_Echo_Time=ul_Front_Echo_Time;
-  ul_Prev_Right_Echo_Time=ul_Right_Echo_Time;
-  ul_Prev_Left_Echo_Time=ul_Left_Echo_Time;
-  ul_Prev_Back_Echo_Time=ul_Left_Echo_Time;
+  unsigned long Echo_Time;
+
   //Ping Ultrasonic
   //Send the Ultrasonic Range Finder a 10 microsecond pulse per tech spec
   digitalWrite(ci_Front_Ultrasonic_Ping, HIGH);
@@ -664,25 +662,40 @@ void Ping()
   digitalWrite(ci_Front_Ultrasonic_Ping, LOW);
   //use command pulseIn to listen to Ultrasonic_Data pin to record the
   //time that it takes from when the Pin goes HIGH until it goes LOW 
-  ul_Front_Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 5000);
-  
+  Echo_Time = pulseIn(ci_Front_Ultrasonic_Data, HIGH, 5000);
+  if (Echo_Time != 0) {
+    ul_Prev_Front_Echo_Time=ul_Front_Echo_Time;
+    ul_Front_Echo_Time = Echo_Time;
+  }
   
   digitalWrite(ci_Right_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Right_Ultrasonic_Ping, LOW);
-  ul_Right_Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 5000);
-  
+  Echo_Time = pulseIn(ci_Right_Ultrasonic_Data, HIGH, 5000);
+  if (Echo_Time != 0) {
+    ul_Prev_Right_Echo_Time=ul_Right_Echo_Time;
+    ul_Right_Echo_Time = Echo_Time;
+  }
+    
   
   digitalWrite(ci_Left_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Left_Ultrasonic_Ping, LOW);
-  ul_Left_Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 5000);
+  Echo_Time = pulseIn(ci_Left_Ultrasonic_Data, HIGH, 5000);
+    if (Echo_Time != 0) {
+    ul_Prev_Left_Echo_Time=ul_Left_Echo_Time;
+    ul_Left_Echo_Time = Echo_Time;
+  }
+  
   
   digitalWrite(ci_Back_Ultrasonic_Ping, HIGH); 
   delayMicroseconds(10);
   digitalWrite(ci_Back_Ultrasonic_Ping, LOW);
-  ul_Back_Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 5000);
-  
+  Echo_Time = pulseIn(ci_Back_Ultrasonic_Data, HIGH, 5000);
+    if (Echo_Time != 0) {
+    ul_Prev_Back_Echo_Time=ul_Back_Echo_Time;
+    ul_Back_Echo_Time = Echo_Time;
+  }
 
   // Print Sensor Readings
   //#ifdef DEBUG_ULTRASONIC
