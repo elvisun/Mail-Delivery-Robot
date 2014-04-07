@@ -73,8 +73,8 @@ unsigned long ul_init_BackEncoder;
 
 unsigned long prev_time;
 
-int location=1;
-int destination=2;
+int location=2;            //should be 1
+int destination=3;          //should be 2
 int communication=0;
 int final_destination=2;
 int travel=1;                      //tracks the hallway we are in
@@ -143,7 +143,7 @@ void loop()
 {
 
   
-/*
+
   Serial.print("left encoder:");
   Serial.println(CharliePlexM::ul_LeftEncoder_Count);
   Serial.print("Right encoder:");  
@@ -152,7 +152,7 @@ void loop()
   Serial.println(CharliePlexM::ul_Encoder3_Count);
   Serial.print("Back ncoder:");
   Serial.println(CharliePlexM::ul_Encoder4_Count);
-  */
+  
   
 
 
@@ -177,13 +177,21 @@ void loop()
    {
      if(travel==1) // we are at hallway 1
      {
-       drive_forward();
-       check_doors();  
+       command_forward(300);  
+       if((ul_Front_Echo_Time/58<20)&&(ul_Front_Echo_Time/58>2))
+       travel=3;
+       command_right(300);
+       Ping();
+       if((ul_Front_Echo_Time/58<20)&&(ul_Front_Echo_Time/58>2))
+       travel=3;
+       
+       //drive_forward();
+       //check_doors();  
      }
-     else if(travel==2)
-     {
-       move_right();      //after ultral sonic find the wall, it changes travel from 2 to 3
-     }
+     //else if(travel==2)
+     //{
+     // move_right();      //after ultral sonic find the wall, it changes travel from 2 to 3
+     //}
      else if(travel==3)
      {
        drive_right();
@@ -279,14 +287,14 @@ void drive_backward()
    {
      complete_stop();
    }
-   else if ((ul_Left_Echo_Time/58 < 19)&&(ul_Prev_Left_Echo_Time/58 < 19))    //too close, move right
+   else if ((ul_Left_Echo_Time/58 < 10)&&(ul_Prev_Left_Echo_Time/58 < 10))    //too close, move right
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
      ui_Front_Motor_Speed=2000;
      ui_Back_Motor_Speed=1900;
    }
-   else if ((ul_Left_Echo_Time/58 > 26)&&(ul_Prev_Left_Echo_Time/58 > 26))     //too far, move left
+   else if ((ul_Left_Echo_Time/58 > 19)&&(ul_Prev_Left_Echo_Time/58 > 19))     //too far, move left
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
@@ -313,28 +321,29 @@ void drive_right()
    {
      complete_stop();
    }
-   /*
-   else if ((ul_Front_Echo_Time/58 < 19)&&(ul_Prev_Front_Echo_Time/58 < 19))     //too close, move right
+   else if ((ul_Front_Echo_Time/58 < 10)&&(ul_Prev_Front_Echo_Time/58 < 10))     //too close, move right
    {
      ui_Left_Motor_Speed=1000;
      ui_Right_Motor_Speed=1000;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
+     Serial.println("move backward");
    }
-   else if ((ul_Front_Echo_Time/58 > 26)&&(ul_Prev_Front_Echo_Time/58 > 26))     //too far, move left
+   else if ((ul_Front_Echo_Time/58 > 19)&&(ul_Prev_Front_Echo_Time/58 > 19))     //too far, move left
    {
      ui_Left_Motor_Speed=2000;
      ui_Right_Motor_Speed=2000;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
+          Serial.println("move forward");
    }
-   */
    else 
    {
      ui_Left_Motor_Speed=1500;
      ui_Right_Motor_Speed=1500;
-     ui_Front_Motor_Speed=1900;
+     ui_Front_Motor_Speed=2000;
      ui_Back_Motor_Speed=2000; 
+          Serial.println("move right");
    }
    
    servo_FrontMotor.writeMicroseconds(ui_Front_Motor_Speed);
@@ -350,14 +359,14 @@ void drive_left()
    {
      complete_stop();
    }
-   else if ((ul_Front_Echo_Time/58 < 19)&&(ul_Prev_Front_Echo_Time/58 < 19))     //too close, move right
+   else if ((ul_Front_Echo_Time/58 < 10)&&(ul_Prev_Front_Echo_Time/58 < 10))     //too close, move right
    {
      ui_Left_Motor_Speed=1000;
      ui_Right_Motor_Speed=1000;
      ui_Front_Motor_Speed=1500;
      ui_Back_Motor_Speed=1500;
    }
-   else if ((ul_Front_Echo_Time/58 > 26)&&(ul_Prev_Front_Echo_Time/58 > 26))     //too far, move left
+   else if ((ul_Front_Echo_Time/58 > 19)&&(ul_Prev_Front_Echo_Time/58 > 19))     //too far, move left
    {
      ui_Left_Motor_Speed=2000;
      ui_Right_Motor_Speed=2000;
@@ -408,12 +417,13 @@ void check_wall()
 
 void check_doors()
 {
-  if((prev_distance-ul_Left_Echo_Time)>232)       //232=4*58, 4cm
+  
+  if(((prev_distance-ul_Left_Echo_Time)>232)&&(prev_distance>100))       //232=4*58, 4cm
   {
     travel=2;
     Serial.println("Turn Right");
   }
-  prev_distance=ul_Left_Echo_Time/58;
+  prev_distance=ul_Left_Echo_Time;
 }
 
 
@@ -464,10 +474,10 @@ void command_mid_to_out()
 {
   if(location==3)
   {
-    command_right(50);
-    command_forward(100);       //???????????????????
+    command_right(25);
+    command_forward(50);       //???????????????????
     mydelay(5000);
-    command_backward(100);
+    command_backward(50);
     //drive right for ...
     //drive forward for ...
     //mydelay(5000);
@@ -475,10 +485,10 @@ void command_mid_to_out()
   }
   else
   {
-    command_forward(50);
-    command_left(100);       //???????????????????
+    command_forward(25);
+    command_left(50);       //???????????????????
     mydelay(5000);
-    command_right(100);
+    command_right(50);
     //drive forward for ...
     //drive left for ...
     //mydelay(5000);
@@ -490,10 +500,10 @@ void command_mid_to_in()
 {
   if(location==3)
   {
-    command_left(50);
-    command_forward(100);       //???????????????????
+    command_left(25);
+    command_forward(50);       //???????????????????
     mydelay(5000);
-    command_backward(100);
+    command_backward(50);
     //drive left for ...
     //drive forward for ...
     //mydelay(5000);
@@ -501,10 +511,10 @@ void command_mid_to_in()
   }
   else
   {
-    command_backward(50);
-    command_left(100);       //???????????????????
+    command_backward(25);
+    command_left(50);       //???????????????????
     mydelay(5000);
-    command_right(100);    
+    command_right(50);    
     //drive back for ...
     //drive left for ...
     //mydelay(5000);
@@ -516,20 +526,20 @@ void command_in_to_out()
 {
   if(location==3)
   {
-    command_right(100);
-    command_forward(100);       //???????????????????
+    command_right(50);
+    command_forward(50);       //???????????????????
     mydelay(5000);
-    command_backward(100);
+    command_backward(50);
     //drive right for ...
     //drive forward for ...
     //mydelay(5000);
     //drive back for..
   }
   else
-  {command_forward(100);
-    command_left(100);       //???????????????????
+  {command_forward(50);
+    command_left(50);       //???????????????????
     mydelay(5000);
-    command_right(100);
+    command_right(50);
     //drive back for ...
     //drive left for ...
     //mydelay(5000);
@@ -736,7 +746,7 @@ void Ping()
 
   // Print Sensor Readings
   //#ifdef DEBUG_ULTRASONIC
-  /*
+  
   Serial.print("FRONT");
   Serial.print("Time (microseconds): ");
   Serial.print(ul_Front_Echo_Time, DEC);
@@ -771,7 +781,7 @@ void Ping()
   
   Serial.println();
   Serial.println();
-  */
+  
 //#endif
 }
 
